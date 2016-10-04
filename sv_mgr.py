@@ -29,8 +29,23 @@ class BadExeError(Exception):
     pass
 
 
+class NeedSudoError(Exception):
+    """Raise when we need sudo access."""
+    pass
+
+
 class NoSuchSvError(Exception):
     """Raise when a sv that does not exist has been requested."""
+    pass
+
+
+class SvAlreadyEnabledError(Exception):
+    """Raise when a sv that's already enabled has been requested to be enabled.'"""
+    pass
+
+
+class SvNotEnabledError(Exception):
+    """Raise when a sv that is not enabled has been requested to be disabled."""
     pass
 
 
@@ -66,8 +81,11 @@ def disable_sv(sv, service_dir):
     try:
         os.remove(service_path)
         return True
-    except OSError:
-        emit_error("'{}' is not enabled!".format(sv))
+    except OSError as e:
+        if "Permission denied" in e.strerror:
+            raise NeedSudoError
+        else:
+            raise SvNotEnabledError
 
 
 def emit_error(error):
@@ -92,11 +110,11 @@ def enable_sv(sv, sv_dir, runsvdir):
         os.symlink(sv_path, service_path)
         return True
     except NoSuchSvError:
-        emit_error("There's no such service: '{}' Did you need to specify a sv dir with '-A PATH'?".format(sv))
+        raise NoSuchSvError
     except PermissionError:
-        emit_error("Permission denied: please rerun with sudo")
+        raise NeedSudoError
     except FileExistsError:
-        emit_error("'{}' is already enabled!".format(sv))
+        raise SvAlreadyEnabledError
 
 
 def list_services(runsvdir):
@@ -121,9 +139,9 @@ def setup_and_parse_args(exe, disable, enable, sv_mgr):
             description="Disable or enable services, list enabled ones", prog=exe)
         actions = parser.add_mutually_exclusive_group(required=True)
         actions.add_argument("-l", "--list", action="store_true", help="List enabled services")
-        actions.add_argument("-d", "--disable", metavar="SERVICE", nargs="?",
+        actions.add_argument("-d", "--disable", dest="service", metavar="SERVICE", nargs="?",
                              help="Disable the specified service")
-        actions.add_argument("-e", "--enable", metavar="SERVICE", nargs="?",
+        actions.add_argument("-e", "--enable", dest="service", metavar="SERVICE", nargs="?",
                              help="Enable the specified service")
 
     elif disable:
@@ -179,23 +197,32 @@ def main(args):
     if args.runsvdir:
         runsvdir = args.runsvdir
 
-    if sv_mgr:
-        if args.disable:
-            disable_sv(args.disable, runsvdir)
-            okprnt("Disabling service: '{}'".format(args.disable))
-        elif args.enable:
-            enable_sv(args.enable, sv_dir, runsvdir)
-            okprnt("Enabling service: '{}'".format(args.enable))
-        elif args.list:
-            list_services(runsvdir)
-    elif disable:
-        if args.service:
-            disable_sv(args.service, runsvdir)
-            okprnt("Disabling service: '{}'".format(args.service))
-    elif enable:
-        if args.service:
-            enable_sv(args.service, sv_dir, runsvdir)
-            okprnt("Enabling service: '{}'".format(args.service))
+    try:
+        if sv_mgr:
+            if args.disable:
+                disable_sv(args.disable, runsvdir)
+                okprnt("Disabling service: '{}'".format(args.disable))
+            elif args.enable:
+                enable_sv(args.enable, sv_dir, runsvdir)
+                okprnt("Enabling service: '{}'".format(args.enable))
+            elif args.list:
+                list_services(runsvdir)
+        elif disable:
+            if args.service:
+                disable_sv(args.service, runsvdir)
+                okprnt("Disabling service: '{}'".format(args.service))
+        elif enable:
+            if args.service:
+                enable_sv(args.service, sv_dir, runsvdir)
+                okprnt("Enabling service: '{}'".format(args.service))
+    except NeedSudoError:
+        emit_error("Permission denied: please rerun with sudo")
+    except NoSuchSvError:
+        emit_error("There's no such service: '{}'".format(args.service))
+    except SvAlreadyEnabledError:
+        emit_error("'{}' is already enabled!".format(args.service))
+    except SvNotEnabledError:
+        emit_error("'{}' is not enabled!".format(args.service))
 
 
 if __name__ == '__main__':

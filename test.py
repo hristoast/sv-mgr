@@ -53,8 +53,7 @@ class SvMgrTests(unittest.TestCase):
             sv_mgr.detect_executable("IDK JAJA")
 
     def test_disable_sv_disabled(self):
-        silence_stderr()
-        with self.assertRaises(SystemExit):
+        with self.assertRaises(sv_mgr.SvNotEnabledError):
             sv_mgr.disable_sv("testing", TEST_SERVICE_DIR)
 
     def test_disable_sv_enabled(self):
@@ -62,7 +61,7 @@ class SvMgrTests(unittest.TestCase):
         self.assertTrue(sv_mgr.disable_sv("testing", TEST_SERVICE_DIR))
 
     def test_disable_sv_fake_service(self):
-        with self.assertRaises(SystemExit):
+        with self.assertRaises(sv_mgr.SvNotEnabledError):
             sv_mgr.disable_sv("IDK JAJA", TEST_SERVICE_DIR)
 
     def test_enable_sv_disabled(self):
@@ -72,12 +71,12 @@ class SvMgrTests(unittest.TestCase):
     def test_enable_sv_enabled(self):
         silence_stderr()
         sv_mgr.enable_sv("testing", TEST_SV_DIR, TEST_SERVICE_DIR)
-        with self.assertRaises(SystemExit):
+        with self.assertRaises(sv_mgr.SvAlreadyEnabledError):
             sv_mgr.enable_sv("testing", TEST_SV_DIR, TEST_SERVICE_DIR)
         os.remove(TEST_SERVICE_ENABLED)
 
     def test_enable_sv_fake_service(self):
-        with self.assertRaises(SystemExit):
+        with self.assertRaises(sv_mgr.NoSuchSvError):
             sv_mgr.enable_sv("IDK JAJA", TEST_SV_DIR, TEST_SERVICE_DIR)
 
 
