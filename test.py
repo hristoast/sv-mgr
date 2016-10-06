@@ -79,6 +79,9 @@ class SvMgrTests(unittest.TestCase):
         with self.assertRaises(sv_mgr.NoSuchSvError):
             sv_mgr.enable_sv("IDK JAJA", TEST_SV_DIR, TEST_SERVICE_DIR)
 
+    def test_list_enabled(self):
+        self.assertIsNotNone(sv_mgr.list_services(TEST_SERVICE_DIR))
+
 
 def main():
     unittest.main()

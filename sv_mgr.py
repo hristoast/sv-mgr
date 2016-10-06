@@ -10,7 +10,7 @@ LIGHT_RED = '\033[91m'
 RED = '\033[31m'
 LIGHT_WHITE = '\033[97m'
 END = '\033[0m'
-BAD_EXE_ERROR = "sv-mgr has been symlinked to as an unknown executable name!"
+BAD_EXE_ERROR = "sv-mgr has detected an unknown executable name!"
 DESCRIPTION = "Disable or enable runit services"
 EXE_LIST = ['sv-mgr', 'sv_mgr.py', 'sv-disable', 'sv-enable']
 LOG_FILE = "/var/log/sv-mgr.log"
@@ -124,10 +124,10 @@ def list_services(runsvdir):
     services.sort()
     services.reverse()
     while services:
-        msg += " "
+        msg += "\n  "
         msg += services.pop()
     msg += END
-    print(msg)
+    return msg
 
 
 def setup_and_parse_args(exe, disable, enable, sv_mgr):
@@ -139,9 +139,9 @@ def setup_and_parse_args(exe, disable, enable, sv_mgr):
             description="Disable or enable services, list enabled ones", prog=exe)
         actions = parser.add_mutually_exclusive_group(required=True)
         actions.add_argument("-l", "--list", action="store_true", help="List enabled services")
-        actions.add_argument("-d", "--disable", dest="service", metavar="SERVICE", nargs="?",
+        actions.add_argument("-d", "--disable", metavar="SERVICE", nargs="?",
                              help="Disable the specified service")
-        actions.add_argument("-e", "--enable", dest="service", metavar="SERVICE", nargs="?",
+        actions.add_argument("-e", "--enable", metavar="SERVICE", nargs="?",
                              help="Enable the specified service")
 
     elif disable:
@@ -176,7 +176,7 @@ def main(args):
     e = detect_executable(args[0])
 
     disable = False
-    enable = True
+    enable = False
     sv_mgr = False
 
     sv_dir = SV_DIR
@@ -206,7 +206,7 @@ def main(args):
                 enable_sv(args.enable, sv_dir, runsvdir)
                 okprnt("Enabling service: '{}'".format(args.enable))
             elif args.list:
-                list_services(runsvdir)
+                print(list_services(runsvdir))
         elif disable:
             if args.service:
                 disable_sv(args.service, runsvdir)
