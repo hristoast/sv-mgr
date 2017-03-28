@@ -1,5 +1,8 @@
-complete -c sv-mgr -p */bin/sv-mgr -a "(/bin/ls /var/service/)" -l disable -x
-complete -c sv-mgr -p */bin/sv-mgr -a "(/bin/ls /etc/sv/)" -l enable -x
-complete -c sv-mgr -p */bin/sv-mgr -a "(/bin/ls /var/service/)" -s d -x
-complete -c sv-mgr -p */bin/sv-mgr -a "(/bin/ls /etc/sv/)" -s e -x
-complete -c sv-mgr -p */bin/sv-mgr -f -l help -l list -l sv-dir -l runsvdir -s A -s B -s h -s l
+complete -c sv-mgr -a "(/bin/ls /var/service/)" -l disable -x -d 'Service'
+complete -c sv-mgr -a "(/bin/ls /etc/sv/)" -l enable -x -d 'Service'
+complete -c sv-mgr -a "(/bin/ls /var/service/)" -s d -x -d 'Service'
+complete -c sv-mgr -a "(/bin/ls /etc/sv/)" -s e -x -d 'Service'
+complete -c sv-mgr -l help -s h -d 'Show the help and exit'
+complete -c sv-mgr -l list -s l -d 'List enabled services'
+complete -c sv-mgr -l sv-dir -s A -d 'Path to directory containing your service\'s run script.  Default: /etc/sv'
+complete -c sv-mgr -l runsvdir -s B -d 'Path to your runsvdir. Default: /var/service'
